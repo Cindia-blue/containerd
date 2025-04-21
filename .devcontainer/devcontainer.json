@@ -1,6 +1,6 @@
 {
   "name": "Containerd Dev Env",
-  "image": "mcr.microsoft.com/devcontainers/go:1.21",
+  "image": "mcr.microsoft.com/devcontainers/go:1.24",
   "customizations": {
     "vscode": {
       "settings": {
