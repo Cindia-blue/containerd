@@ -1,0 +1,19 @@
+{
+  "name": "Containerd Dev Env",
+  "image": "mcr.microsoft.com/devcontainers/go:1.24",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "go.toolsManagement.autoUpdate": true,
+        "go.useLanguageServer": true
+      },
+      "extensions": [
+        "golang.go",
+        "ms-vscode.cpptools",
+        "eamodio.gitlens"
+      ]
+    }
+  },
+  "postCreateCommand": "go mod tidy",
+  "remoteUser": "vscode"
+}
