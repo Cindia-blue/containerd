@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: Apache-2.0
 // Copyright The containerd Authors.
+// SPDX-License-Identifier: Apache-2.0
 
 package server
 
