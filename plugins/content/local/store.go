@@ -18,6 +18,7 @@ package local
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -25,6 +26,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/containerd/errdefs"
@@ -615,14 +617,38 @@ func (s *store) writer(ctx context.Context, ref string, total int64, expected di
 // be cancelled. Any resources associated with the ingest will be cleaned.
 func (s *store) Abort(ctx context.Context, ref string) error {
 	root := s.ingestRoot(ref)
-	if err := os.RemoveAll(root); err != nil {
-		if os.IsNotExist(err) {
-			return fmt.Errorf("ingest ref %q: %w", ref, errdefs.ErrNotFound)
+
+	_ = os.Remove(filepath.Join(root, "data"))
+	_ = os.Remove(filepath.Join(root, "total"))
+	_ = os.Remove(filepath.Join(root, "startedat"))
+	_ = os.Remove(filepath.Join(root, "updatedat"))
+	_ = os.Remove(filepath.Join(root, "ref"))
+
+	const tries = 5
+	const backoff = 50 * time.Millisecond
+
+	var lastErr error
+	for i := 0; i < tries; i++ {
+		err := os.RemoveAll(root)
+		if err == nil || os.IsNotExist(err) {
+			if os.IsNotExist(err) {
+				return fmt.Errorf("ingest ref %q: %w", ref, errdefs.ErrNotFound)
+			}
+			return nil
 		}
 
+		msg := err.Error()
+		if errors.Is(err, syscall.ENOTEMPTY) || strings.Contains(msg, "directory not empty") {
+			lastErr = err
+			time.Sleep(backoff)
+			continue
+		}
 		return err
 	}
 
+	if lastErr != nil {
+		return lastErr
+	}
 	return nil
 }
 
